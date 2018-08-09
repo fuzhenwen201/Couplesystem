@@ -969,21 +969,41 @@ static int on_cmd_market_update(nw_ses * ses,rpc_pkg * pkg,json_t * params){
         json_t *row = json_array_get(params, i);
         if (!json_is_object(row))
             return -__LINE__;
-            
-         char* tmp_name = NULL;
-         ERR_RET_LN(read_cfg_str(row, "name", &tmp_name, NULL));
 
-         for(size_t j = 0; j < settings.market_num; ++j){
-            if(strcmp(tmp_name, settings.markets[j].name) == 0){
+        struct market *tmp_market = malloc(sizeof(struct market));
+
+        ERR_RET_LN(read_cfg_str(row, "name", &tmp_market->name, NULL));
+
+        market_t *m_market = get_market(tmp_market->name);
+        if(m_market == NULL){
+            ERR_RET_LN(read_cfg_int(row, "fee_prec", &tmp_market->fee_prec, false, 4));
+            ERR_RET_LN(read_cfg_mpd(row, "min_amount", &tmp_market->min_amount, "0.01"));
+
+            json_t *stock = json_object_get(row, "stock");
+            if (!stock || !json_is_object(stock))
+                return -__LINE__;
+            ERR_RET_LN(read_cfg_str(stock, "name", &tmp_market->stock, NULL));
+            ERR_RET_LN(read_cfg_int(stock, "prec", &tmp_market->stock_prec, true, 0));
+
+            json_t *money = json_object_get(row, "money");
+            if (!money || !json_is_object(money))
+                return -__LINE__;
+            ERR_RET_LN(read_cfg_str(money, "name", &tmp_market->money, NULL));
+            ERR_RET_LN(read_cfg_int(money, "prec", &tmp_market->money_prec, true, 0));
+
+            if(!asset_exist(tmp_market->stock) || !asset_exist(tmp_market->money)){
                 same_num[i] = 1;
                 ++same_count;
             }
-         }
-        free(tmp_name);
+        }else{
+            same_num[i] = 1;
+            ++same_count;
+        }
+        free(tmp_market);
     }
 
     if (market_num == same_count) {
-        return reply_error(ses, pkg, 10, "repeat update");
+        return reply_error(ses, pkg, 10, "repeat update or missing asset");
     }
     
     size_t number = settings.market_num;
