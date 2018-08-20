@@ -261,6 +261,7 @@ static int init_methods_handler(void)
     ERR_RET_LN(add_handler("asset.list", matchengine, CMD_ASSET_LIST));
     ERR_RET_LN(add_handler("asset.summary", matchengine, CMD_ASSET_SUMMARY));
     ERR_RET_LN(add_handler("asset.update", matchengine, CMD_ASSET_UPDATE));
+    ERR_RET_LN(add_handler("assetmarket.delete", matchengine, CMD_ASSET_MARKET_SUB));
 
     ERR_RET_LN(add_handler("balance.query", matchengine, CMD_BALANCE_QUERY));
     ERR_RET_LN(add_handler("balance.update", matchengine, CMD_BALANCE_UPDATE));

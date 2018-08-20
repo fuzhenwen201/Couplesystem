@@ -151,6 +151,8 @@ static int on_cmd_balance_query(nw_ses *ses, rpc_pkg *pkg, json_t *params)
     if (request_size == 1) {
         for (size_t i = 0; i < settings.asset_num; ++i) {
             const char *asset = settings.assets[i].name;
+            if (asset == NULL)
+                continue;
             json_t *unit = json_object();
             int prec_save = asset_prec(asset);
             int prec_show = asset_prec_show(asset);
@@ -294,6 +296,8 @@ static int on_cmd_asset_list(nw_ses *ses, rpc_pkg *pkg, json_t *params)
     json_t *result = json_array();
     for (int i = 0; i < settings.asset_num; ++i) {
         json_t *asset = json_object();
+        if (settings.assets[i].name == NULL)
+            continue;
         json_object_set_new(asset, "name", json_string(settings.assets[i].name));
         json_object_set_new(asset, "prec", json_integer(settings.assets[i].prec_show));
         json_array_append_new(result, asset);
@@ -311,6 +315,8 @@ static json_t *get_asset_summary(const char *name)
     mpd_t *total = mpd_new(&mpd_ctx);
     mpd_t *available = mpd_new(&mpd_ctx);
     mpd_t *freeze = mpd_new(&mpd_ctx);
+    if (name == NULL || !asset_exist(name))
+        return NULL;
     balance_status(name, total, &available_count, available, &freeze_count, freeze);
 
     json_t *obj = json_object();
@@ -333,7 +339,10 @@ static int on_cmd_asset_summary(nw_ses *ses, rpc_pkg *pkg, json_t *params)
     json_t *result = json_array();
     if (json_array_size(params) == 0) {
         for (int i = 0; i < settings.asset_num; ++i) {
-            json_array_append_new(result, get_asset_summary(settings.assets[i].name));
+            json_t *tmpjson = get_asset_summary(settings.assets[i].name);
+            if (tmpjson == NULL)
+                continue;
+            json_array_append_new(result, tmpjson);
         }
     } else {
         for (int i = 0; i < json_array_size(params); ++i) {
@@ -342,7 +351,11 @@ static int on_cmd_asset_summary(nw_ses *ses, rpc_pkg *pkg, json_t *params)
                 goto invalid_argument;
             if (!asset_exist(asset))
                 goto invalid_argument;
-            json_array_append_new(result, get_asset_summary(asset));
+
+            json_t *tmpjson = get_asset_summary(asset);
+            if (tmpjson == NULL)
+                continue;
+            json_array_append_new(result, tmpjson);
         }
     }
 
@@ -942,6 +955,8 @@ static int on_cmd_market_list(nw_ses *ses, rpc_pkg *pkg, json_t *params)
     json_t *result = json_array();
     for (int i = 0; i < settings.market_num; ++i) {
         json_t *market = json_object();
+        if(settings.markets[i].name == NULL)
+            continue;
         json_object_set_new(market, "name", json_string(settings.markets[i].name));
         json_object_set_new(market, "stock", json_string(settings.markets[i].stock));
         json_object_set_new(market, "money", json_string(settings.markets[i].money));
@@ -1101,12 +1116,62 @@ static int on_cmd_asset_update(nw_ses * ses,rpc_pkg * pkg,json_t * params)
     return reply_success(ses, pkg);
 }
 
+static int on_cmd_asset_market_sub(nw_ses * ses,rpc_pkg * pkg,json_t * params){
+    size_t asset_num = json_array_size(params);
+    if(asset_num <= 0)
+        return -__LINE__;
+
+    for (size_t i = 0; i < asset_num; ++i) {
+        if (!json_is_string(json_array_get(params, i)))
+            return reply_error_invalid_argument(ses, pkg);
+        const char *market_name = json_string_value(json_array_get(params, i));
+        if (asset_exist(market_name)) {
+            asset_del(market_name);
+
+            for (size_t j = 0; j < settings.asset_num; ++j) {
+                if (settings.assets[j].name == NULL)
+                    continue;
+                if (strcmp(settings.assets[j].name, market_name) == 0){
+                    free(settings.assets[j].name);
+                    settings.assets[j].name = NULL;
+                    settings.assets[j].prec_save = 0;
+                    settings.assets[j].prec_show = 0;
+                }
+            }
+        } else if (market_exist(market_name)) {
+            market_del(market_name);
+
+            for (size_t j = 0; j < settings.market_num; ++j) {
+                if (settings.markets[j].name == NULL)
+                    continue;
+                if (strcmp(settings.markets[j].name, market_name) == 0){
+                    free(settings.markets[j].name);
+                    settings.markets[j].name = NULL;
+                    settings.markets[j].fee_prec = 0;
+                    mpd_del(settings.markets[j].min_amount);
+                    //free(settings.markets[j].min_amount);
+                    settings.markets[j].min_amount = NULL;
+                    free(settings.markets[j].stock);
+                    settings.markets[j].stock = NULL;
+                    settings.markets[j].stock_prec = 0;
+                    free(settings.markets[j].money);
+                    settings.markets[j].money = NULL;
+                    settings.markets[j].money_prec = 0;
+                }
+            }
+        }
+    }
+    return reply_success(ses, pkg);
+}
+
 static json_t *get_market_summary(const char *name)
 {
     size_t ask_count;
     size_t bid_count;
     mpd_t *ask_amount = mpd_new(&mpd_ctx);
     mpd_t *bid_amount = mpd_new(&mpd_ctx);
+    if (name == NULL)
+        return NULL;
     market_t *market = get_market(name);
     if (market == NULL){
         return NULL;
@@ -1131,7 +1196,10 @@ static int on_cmd_market_summary(nw_ses *ses, rpc_pkg *pkg, json_t *params)
     json_t *result = json_array();
     if (json_array_size(params) == 0) {
         for (int i = 0; i < settings.market_num; ++i) {
-            json_array_append_new(result, get_market_summary(settings.markets[i].name));
+            json_t *tmpjson = get_market_summary(settings.markets[i].name);
+            if (tmpjson == NULL)
+                continue;
+            json_array_append_new(result, tmpjson);
         }
     } else {
         for (int i = 0; i < json_array_size(params); ++i) {
@@ -1140,7 +1208,10 @@ static int on_cmd_market_summary(nw_ses *ses, rpc_pkg *pkg, json_t *params)
                 goto invalid_argument;
             if (get_market(market) == NULL)
                 goto invalid_argument;
-            json_array_append_new(result, get_market_summary(market));
+            json_t *tmpjson = get_market_summary(market);
+            if(tmpjson == NULL)
+                continue;
+            json_array_append_new(result, tmpjson);
         }
     }
 
@@ -1290,6 +1361,13 @@ static void svr_on_recv_pkg(nw_ses *ses, rpc_pkg *pkg)
         ret = on_cmd_market_update(ses, pkg, params);
         if (ret < 0) {
             log_error("on_cmd_market_update %s fail: %d", params_str, ret);
+        }
+        break;
+    case CMD_ASSET_MARKET_SUB:
+        log_trace("from: %s cmd asset and market delete, sequence: %u params: %s", nw_sock_human_addr(&ses->peer_addr), pkg->sequence, params_str);
+        ret = on_cmd_asset_market_sub(ses, pkg, params);
+        if (ret < 0) {
+            log_error("on_cmd_asset_market_sub %s fail: %d", params_str, ret);
         }
         break;
     default:

@@ -56,6 +56,8 @@ int init_trade(void)
 int add_market_trade(size_t num)
 {
     for (size_t i = num; i < settings.market_num; ++i) {
+        if (settings.markets[i].name == NULL)
+            continue;
         market_t *m = market_create(&settings.markets[i]);
         if (m == NULL) {
             return -__LINE__;
@@ -68,9 +70,23 @@ int add_market_trade(size_t num)
 
 market_t *get_market(const char *name)
 {
+    if (name == NULL)
+        return NULL;
     dict_entry *entry = dict_find(dict_market, name);
     if (entry)
         return entry->val;
     return NULL;
 }
 
+bool market_exist(const char *name)
+{
+    market_t *at = get_market(name);
+    return at ? true : false;
+}
+
+void market_del(const char* name)
+{
+    if (name == NULL)
+        return;
+    dict_delete(dict_market, name);
+}

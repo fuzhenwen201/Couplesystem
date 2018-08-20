@@ -11,6 +11,8 @@
 int init_trade(void);
 market_t *get_market(const char *name);
 int add_market_trade(size_t num);
+bool market_exist(const char *name);
+void market_del(const char* name);
 
 # endif
 

@@ -24,6 +24,7 @@ int add_asset_balance(size_t num);
 bool asset_exist(const char *asset);
 int asset_prec(const char *asset);
 int asset_prec_show(const char *asset);
+void asset_del(const char *asset);
 
 mpd_t *balance_get(uint32_t user_id, uint32_t type, const char *asset);
 void   balance_del(uint32_t user_id, uint32_t type, const char *asset);

@@ -13,6 +13,7 @@
 # define CMD_ASSET_LIST             104
 # define CMD_ASSET_SUMMARY          105
 # define CMD_ASSET_UPDATE           106
+#define  CMD_ASSET_MARKET_SUB       107
 
 // trade
 # define CMD_ORDER_PUT_LIMIT        201

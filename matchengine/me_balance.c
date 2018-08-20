@@ -117,6 +117,8 @@ int init_balance()
     ERR_RET(init_dict());
 
     for (size_t i = 0; i < settings.asset_num; ++i) {
+        if (settings.assets[i].name == NULL)
+            continue;
         struct asset_type type;
         type.prec_save = settings.assets[i].prec_save;
         type.prec_show = settings.assets[i].prec_show;
@@ -130,6 +132,8 @@ int init_balance()
 int add_asset_balance(size_t num)
 {
      for (size_t i = num; i < settings.asset_num; ++i) {
+        if (settings.assets[i].name == NULL)
+            continue;
         struct asset_type type;
         type.prec_save = settings.assets[i].prec_save;
         type.prec_show = settings.assets[i].prec_show;
@@ -142,6 +146,8 @@ int add_asset_balance(size_t num)
 
 static struct asset_type *get_asset_type(const char *asset)
 {
+    if (asset == NULL)
+        return NULL;
     dict_entry *entry = dict_find(dict_asset, asset);
     if (entry == NULL)
         return NULL;
@@ -153,6 +159,13 @@ bool asset_exist(const char *asset)
 {
     struct asset_type *at = get_asset_type(asset);
     return at ? true : false;
+}
+
+void asset_del(const char *asset)
+{
+    if (asset == NULL)
+        return;
+    dict_delete(dict_asset, asset);
 }
 
 int asset_prec(const char *asset)
