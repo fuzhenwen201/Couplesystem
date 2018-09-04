@@ -97,10 +97,10 @@ Example response: `{"code": 0, "message": null, "data": {"user_id": 1}}`
 1、Use apt-get install to install following packages: libev-dev, libmpdec-dev, libssl-dev, libmysqlclient-dev, libtool, autoconf, gcc, g++, build-essential, mysql-server, mysql-client,liblz4-dev,libhiredis-dev.
 
 2、Install Oracle JDK8
-  add-apt-repository ppa:webupd8team/java
-  apt-get update
-  apt-get install oracle-java8-installer
-  apt-get install oracle-java8-set-default
+  1）add-apt-repository ppa:webupd8team/java
+  2）apt-get update
+  3）apt-get install oracle-java8-installer
+  4）apt-get install oracle-java8-set-default
 
 3、Create a folder XXX to place everything required, including this project.
 
@@ -112,10 +112,10 @@ Example response: `{"code": 0, "message": null, "data": {"user_id": 1}}`
 6、create new folders "logs" and "zkData"
 
 7、Enter conf folder, edit server.properties
-  broker.id=1
-  port=9092 # The following 2 lines maybe not in the file, just add it.
-  host.name=localhost
-  log.dirs=/home/trader/Documents/tldae/kafka_2.11-0.11.0.0/logs # It's OK to any folder you like
+   broker.id=1
+   port=9092 # The following 2 lines maybe not in the file, just add it.
+   host.name=localhost
+   log.dirs=/home/trader/Documents/tldae/kafka_2.11-0.11.0.0/logs # It's OK to any folder you like
 
 8、edit zookeeper.properties
   dataDir=/home/trader/Documents/tldae/kafka_2.11-0.11.0.0/zkData
@@ -127,40 +127,40 @@ Example response: `{"code": 0, "message": null, "data": {"user_id": 1}}`
   bin/kafka-server-start.sh config/server.properties
 
 11、Build jansson
- Clone code from https://github.com/akheron/jansson
- autoreconf -i (if configure not found), ./configure, make, make install.
+ 1）Clone code from https://github.com/akheron/jansson
+ 2）autoreconf -i (if configure not found), ./configure, make, make install.
 
 12、Build librdkafka
- Clone code from https://github.com/edenhill/librdkafka
- ./configure, make, make install.
+ 1）Clone code from https://github.com/edenhill/librdkafka
+ 2）./configure, make, make install.
 
 13、Build libcurl
- Get code from http://curl.haxx.se/download/curl-7.45.0.tar.gz, run "tar zxfv filename" to unpackage it.
- Run "./configure --disable-ldap --disable-ldaps" first, or you'll hit lots link errors in future.
- make, make install
+ 1）Get code from http://curl.haxx.se/download/curl-7.45.0.tar.gz, run "tar zxfv filename" to unpackage it.
+ 2）Run "./configure --disable-ldap --disable-ldaps" first, or you'll hit lots link errors in future.
+ 3）make, make install
 
 14、Redis
- Enter folder "redis.conf"
- Run "sudo redis-server redis.conf.6381" (Same for 6382 and 6383)
- Run "redis -p 6382", run "SLAVEOF 127.0.0.1 6381" (Same for 6383)
- Run "sudo redis-sentinel sentinel.conf.26381" (Same for 6382 and 6383)
+ 1）Enter folder "redis.conf"
+ 2）Run "sudo redis-server redis.conf.6381" (Same for 6382 and 6383)
+ 3）Run "redis -p 6382", run "SLAVEOF 127.0.0.1 6381" (Same for 6383)
+ 4）Run "sudo redis-sentinel sentinel.conf.26381" (Same for 6382 and 6383)
  How to verify?
- redis-cli -p 26381 (Same check for 26382 and 26383)
- run "SENTINEL get-master-addr-by-name mymaster", you should see 2 lines: "127.0.0.1" and "6381".
+ 5）redis-cli -p 26381 (Same check for 26382 and 26383)
+ 6）run "SENTINEL get-master-addr-by-name mymaster", you should see 2 lines: "127.0.0.1" and "6381".
 
 15、MySQL
 #Use root to login and create 2 database: trade_history and trade_log
- Create a user "trader" (or any name you like) and grant privileges
- create user trader@localhost identified by "Abcd1234";
- grant all privileges on trade_history.* to trader@localhost identified by 'Abcd1234';
- grant all privileges on trade_log.* to trader@localhost identified by 'Abcd1234';
- flush privileges;
- Enter folder "sql", and execute
- mysql -h localhost -u trader -p trade_history < create_trade_history.sql
- mysql -h localhost -u trader -p trade_log < create_trade_log.sql
+ 1）Create a user "trader" (or any name you like) and grant privileges
+ 2）create user trader@localhost identified by "Abcd1234";
+ 3）rant all privileges on trade_history.* to trader@localhost identified by 'Abcd1234';
+ 4）rant all privileges on trade_log.* to trader@localhost identified by 'Abcd1234';
+ 5）lush privileges;
+ 6）nter folder "sql", and execute
+ 7）ysql -h localhost -u trader -p trade_history < create_trade_history.sql
+ 8）ysql -h localhost -u trader -p trade_log < create_trade_log.sql
 
 16、Build project
- Make sure jansson, librdkafka, curl and the project under the same folder.
- Build "depends/hiredis", "network" and "utils", copy the corresponding libxxx.a files to "libs" folder.
- For "config.json", please modify log.path and db_xxx information accordingly.
- Run "sudo ./xxx.exe config.json" to start the service (accessws need more things, not fixed yet), remember run "marketprice" after    "matchengine".
+ 1）ake sure jansson, librdkafka, curl and the project under the same folder.
+ 2）uild "depends/hiredis", "network" and "utils", copy the corresponding libxxx.a files to "libs" folder.
+ 3）or "config.json", please modify log.path and db_xxx information accordingly.
+ 4）n "sudo ./xxx.exe config.json" to start the service (accessws need more things, not fixed yet), remember run "marketprice" after    "matchengine".
